@@ -1,0 +1,20 @@
+{
+  "name": "inventory-order-api",
+  "version": "1.0.0",
+  "description": "REST API for inventory and order management",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "keywords": [
+    "inventory",
+    "orders",
+    "rest-api"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.3.0"
+  }
+}
