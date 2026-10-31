@@ -4,7 +4,8 @@
   "description": "REST API for inventory and order management",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "migrate": "node scripts/migrate.js"
   },
   "keywords": [
     "inventory",
