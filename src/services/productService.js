@@ -90,4 +90,72 @@ async function listProducts({ page, limit, search, isActive }) {
   };
 }
 
-module.exports = { createProduct, listProducts };
+
+async function getProductById(id) {
+  const result = await pool.query(
+    `SELECT p.id, p.sku, p.name, p.description,
+            p.unit_price, p.is_active,
+            p.created_at, p.updated_at,
+            i.quantity AS available_stock
+     FROM products p
+     JOIN inventory i ON i.product_id = p.id
+     WHERE p.id = $1`,
+    [id]
+  );
+
+  return result.rows[0] || null;
+}
+
+async function updateProduct(id, data) {
+  const result = await pool.query(
+    `UPDATE products
+     SET sku = COALESCE($1, sku),
+         name = COALESCE($2, name),
+         description = COALESCE($3, description),
+         unit_price = COALESCE($4, unit_price),
+         updated_at = NOW()
+     WHERE id = $5 AND is_active = TRUE
+     RETURNING id`,
+    [
+      data.sku ?? null,
+      data.name ?? null,
+      data.description ?? null,
+      data.unit_price ?? null,
+      id
+    ]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return getProductById(id);
+}
+
+async function deactivateProduct(id) {
+  const result = await pool.query(
+    `UPDATE products
+     SET is_active = FALSE,
+         updated_at = CASE
+           WHEN is_active THEN NOW()
+           ELSE updated_at
+         END
+     WHERE id = $1
+     RETURNING id`,
+    [id]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return getProductById(id);
+}
+
+module.exports = {
+  createProduct,
+  listProducts,
+  getProductById,
+  updateProduct,
+  deactivateProduct
+};

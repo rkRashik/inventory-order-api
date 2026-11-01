@@ -4,13 +4,37 @@ const authorizeRole = require("../middleware/authorizeRole");
 
 const {
   addProduct,
-  getProducts
+  getProducts,
+  getProduct,
+  editProduct,
+  disableProduct
 } = require("../controllers/productController");
 
 const router = express.Router();
 
 router.get("/", authenticate, getProducts);
 
-router.post("/", authenticate, authorizeRole("ADMIN"), addProduct);
+router.get("/:id", authenticate, getProduct);
+
+router.post(
+  "/",
+  authenticate,
+  authorizeRole("ADMIN"),
+  addProduct
+);
+
+router.patch(
+  "/:id",
+  authenticate,
+  authorizeRole("ADMIN"),
+  editProduct
+);
+
+router.patch(
+  "/:id/deactivate",
+  authenticate,
+  authorizeRole("ADMIN"),
+  disableProduct
+);
 
 module.exports = router;
