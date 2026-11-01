@@ -335,8 +335,67 @@ async function cancelOrder(id, userId) {
   }
 }
 
+
+async function listOrders({ page, limit, status, fromDate, toDate }) {
+  const conditions = [];
+  const params = [];
+
+  if (status) {
+    params.push(status);
+    conditions.push(`status = $${params.length}`);
+  }
+
+  if (fromDate) {
+    params.push(fromDate);
+    conditions.push(`created_at >= $${params.length}::date`);
+  }
+
+  if (toDate) {
+    params.push(toDate);
+    conditions.push(
+      `created_at < ($${params.length}::date + INTERVAL '1 day')`
+    );
+  }
+
+  const where = conditions.length
+    ? `WHERE ${conditions.join(" AND ")}`
+    : "";
+
+  const countResult = await pool.query(
+    `SELECT COUNT(*) AS total FROM orders ${where}`,
+    params
+  );
+
+  const total = Number(countResult.rows[0].total);
+  const offset = (page - 1) * limit;
+
+  const result = await pool.query(
+    `SELECT id, order_number, customer_name, status,
+            total_amount, created_by, cancelled_by,
+            cancelled_at, created_at
+     FROM orders
+     ${where}
+     ORDER BY created_at DESC, id DESC
+     LIMIT $${params.length + 1}
+     OFFSET $${params.length + 2}`,
+    [...params, limit, offset]
+  );
+
+  return {
+    orders: result.rows,
+    pagination: {
+      page,
+      limit,
+      total,
+      total_pages: Math.ceil(total / limit)
+    }
+  };
+}
+
+
 module.exports = {
   createOrder,
   getOrderById,
-  cancelOrder
+  cancelOrder,
+  listOrders
 };

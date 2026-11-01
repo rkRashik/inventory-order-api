@@ -1,7 +1,9 @@
 const { z } = require("zod");
 const {
   createOrder,
-  cancelOrder
+  getOrderById,
+  cancelOrder,
+  listOrders
 } = require("../services/orderService");
 
 const itemSchema = z.object({
@@ -102,7 +104,98 @@ async function cancelOrderHandler(req, res, next) {
 }
 
 
+function isValidOrderId(id) {
+  return /^[1-9]\d*$/.test(id) &&
+    Number.isSafeInteger(Number(id));
+}
+
+function isValidDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+
+  const date = new Date(`${value}T00:00:00Z`);
+
+  return !Number.isNaN(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value;
+}
+
+const dateSchema = z.string().refine(isValidDate);
+
+const orderListSchema = z.object({
+  page: z.coerce.number().int().min(1).max(100000).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  status: z.enum(["CONFIRMED", "CANCELLED"]).optional(),
+  from_date: dateSchema.optional(),
+  to_date: dateSchema.optional()
+}).strict().refine(
+  data => !data.from_date ||
+    !data.to_date ||
+    data.from_date <= data.to_date,
+  { message: "Invalid date range" }
+);
+
+async function getOrders(req, res, next) {
+  const parsed = orderListSchema.safeParse(req.query);
+
+  if (!parsed.success) {
+    return res.status(400).json({
+      error: {
+        code: "VALIDATION_ERROR",
+        message: "Invalid order filters"
+      }
+    });
+  }
+
+  try {
+    const data = parsed.data;
+
+    const result = await listOrders({
+      page: data.page,
+      limit: data.limit,
+      status: data.status,
+      fromDate: data.from_date,
+      toDate: data.to_date
+    });
+
+    return res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function getOrder(req, res, next) {
+  if (!isValidOrderId(req.params.id)) {
+    return res.status(400).json({
+      error: {
+        code: "VALIDATION_ERROR",
+        message: "Invalid order ID"
+      }
+    });
+  }
+
+  try {
+    const order = await getOrderById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({
+        error: {
+          code: "ORDER_NOT_FOUND",
+          message: "Order not found"
+        }
+      });
+    }
+
+    return res.status(200).json({ order });
+  } catch (error) {
+    next(error);
+  }
+}
+
+
 module.exports = {
   addOrder,
-  cancelOrderHandler
+  cancelOrderHandler,
+  getOrders,
+  getOrder
 };
