@@ -4,8 +4,31 @@ const userRoutes = require("./routes/userRoutes");
 const productRoutes = require("./routes/productRoutes");
 const inventoryRoutes = require("./routes/inventoryRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const { requestLogger } = require("./middleware/requestLogger");
+const cors = require("cors");
 
 const app = express();
+
+app.use(requestLogger);
+
+const allowedOrigins = (
+  process.env.CORS_ALLOWED_ORIGINS || ""
+)
+  .split(",")
+  .map(origin => origin.trim())
+  .filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    callback(null, Boolean(origin && allowedOrigins.includes(origin)));
+  },
+  methods: ["GET", "POST", "PATCH", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "Idempotency-Key"
+  ]
+}));
 
 app.use(express.json({ limit: "100kb" }));
 

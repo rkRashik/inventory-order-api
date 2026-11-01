@@ -276,4 +276,10 @@ The test database is not cleaned automatically after each run. Random identifier
 
 ## Scope and limitations
 
-This is a local assessment project, not a deployed production service. It has no payment flow, customer registration, or password reset API. Login rate limiting and basic error handling are implemented, but structured request logging and production-specific CORS configuration are not included. The tests cover important cases, not every possible failure or high-load situation.
+The API includes JSON request logging and logs important order and
+inventory operations. Browser access is controlled through the
+CORS_ALLOWED_ORIGINS environment variable, which is empty by default.
+
+This is a local assessment project, not a deployed production service.
+Testing covers the main business rules but not every possible failure
+or high-load scenario.

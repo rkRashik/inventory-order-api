@@ -5,6 +5,7 @@ const {
   cancelOrder,
   listOrders
 } = require("../services/orderService");
+const { logEvent } = require("../middleware/requestLogger");
 
 const itemSchema = z.object({
   product_id: z.number().int().positive()
@@ -54,6 +55,13 @@ async function addOrder(req, res, next) {
       userId: req.user.id
     });
 
+    logEvent(
+      result.replayed ? "order.replayed" : "order.created",
+    {
+      order_id: result.order.id,
+      user_id: req.user.id
+    });
+
     return res.status(result.replayed ? 200 : 201).json(result);
   } catch (error) {
     if (error.status) {
@@ -87,6 +95,11 @@ async function cancelOrderHandler(req, res, next) {
 
   try {
     const order = await cancelOrder(id, req.user.id);
+
+    logEvent("order.cancelled", {
+      order_id: order.id,
+      user_id: req.user.id
+    });
 
     return res.status(200).json({ order });
   } catch (error) {

@@ -76,6 +76,13 @@ Passwords are stored as bcrypt hashes. Login issues a JWT that expires after one
 
 Zod validates request data, SQL queries use parameters for values, and login is rate-limited to 10 requests per 15 minutes. Unexpected errors are returned to clients as generic `500` responses. The JSON body limit is 100 KB.
 
+HTTP requests and important order and inventory operations are logged
+as JSON without recording passwords, access tokens, or request bodies.
+
+CORS uses an explicit origin allowlist configured through
+CORS_ALLOWED_ORIGINS. If no origins are configured, cross-origin
+browser requests are not allowed.
+
 ## 9. Testing
 
 I used Node.js's built-in test runner with Supertest and a separate PostgreSQL test database.
@@ -92,5 +99,4 @@ The latest local test run passed all **9 reported tests** (including the parent 
 - All prices use one consistent currency; multi-currency handling is not included.
 - Idempotency keys have no expiry or cleanup process.
 - No payment processing, public registration, or password reset is included.
-- Logging is basic, not structured. No browser-specific CORS middleware is configured.
 - The project is intended to run locally for review; production deployment is outside the current scope.

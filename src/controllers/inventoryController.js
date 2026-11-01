@@ -3,6 +3,8 @@ const {
   adjustStock,
   getStockMovements
 } = require("../services/inventoryService");
+const { logEvent } = require("../middleware/requestLogger");
+
 
 const adjustmentSchema = z.object({
   product_id: z.number().int().positive()
@@ -49,6 +51,13 @@ async function createAdjustment(req, res, next) {
       quantity: parsed.data.quantity,
       reason: parsed.data.reason,
       userId: req.user.id
+    });
+
+    logEvent("inventory.adjusted", {
+      product_id: result.product_id,
+      type: parsed.data.type,
+      quantity: parsed.data.quantity,
+      user_id: req.user.id
     });
 
     return res.status(201).json(result);
