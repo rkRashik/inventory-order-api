@@ -126,6 +126,7 @@ const orderListSchema = z.object({
   page: z.coerce.number().int().min(1).max(100000).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   status: z.enum(["CONFIRMED", "CANCELLED"]).optional(),
+  search: z.string().trim().min(1).max(100).optional(),
   from_date: dateSchema.optional(),
   to_date: dateSchema.optional()
 }).strict().refine(
@@ -155,7 +156,8 @@ async function getOrders(req, res, next) {
       limit: data.limit,
       status: data.status,
       fromDate: data.from_date,
-      toDate: data.to_date
+      toDate: data.to_date,
+      search: data.search
     });
 
     return res.status(200).json(result);

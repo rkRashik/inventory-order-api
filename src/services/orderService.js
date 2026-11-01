@@ -336,9 +336,17 @@ async function cancelOrder(id, userId) {
 }
 
 
-async function listOrders({ page, limit, status, fromDate, toDate }) {
+async function listOrders({ page, limit, status, fromDate, toDate, search }) {
   const conditions = [];
   const params = [];
+
+  if (search) {
+  params.push(search);
+
+  conditions.push(
+    `(POSITION(LOWER($${params.length}) IN LOWER(customer_name)) > 0
+      OR POSITION(LOWER($${params.length}) IN LOWER(order_number)) > 0)`);
+  }
 
   if (status) {
     params.push(status);
